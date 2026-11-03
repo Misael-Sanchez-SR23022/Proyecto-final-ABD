@@ -27,3 +27,21 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
+--03 El anestesiólogo debe tener la especialidad de anestesiología
+CREATE OR REPLACE FUNCTION fn_validar_anestesiologo()
+RETURNS trigger AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM empleado e
+        JOIN especialidad s ON s.id_especialidad = e.id_especialidad
+        WHERE e.id_empleado = NEW.id_anestesiologo
+          AND s.nombre_especialidad ILIKE 'anestesi%'
+    ) THEN
+        RAISE EXCEPTION 'El empleado % no tiene la especialidad de anestesiología', NEW.id_anestesiologo;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
