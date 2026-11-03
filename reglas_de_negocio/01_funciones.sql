@@ -74,3 +74,24 @@ BEGIN
     UPDATE cama SET estado = 'OCUPADA' WHERE id_cama = p_id_cama;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_ingreso_gestiona_cama()
+RETURNS trigger AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.estado = 'ACTIVO' THEN
+            PERFORM fn_ocupar_cama(NEW.id_cama);
+        END IF;
+    ELSE  -- UPDATE
+        IF OLD.estado = 'ACTIVO' AND NEW.estado <> 'ACTIVO' THEN
+            UPDATE cama SET estado = 'DISPONIBLE' WHERE id_cama = OLD.id_cama;   -- alta o cancelación
+        ELSIF OLD.estado = 'ACTIVO' AND NEW.estado = 'ACTIVO' AND OLD.id_cama <> NEW.id_cama THEN
+            UPDATE cama SET estado = 'DISPONIBLE' WHERE id_cama = OLD.id_cama;   -- traslado de cama
+            PERFORM fn_ocupar_cama(NEW.id_cama);
+        ELSIF OLD.estado <> 'ACTIVO' AND NEW.estado = 'ACTIVO' THEN
+            PERFORM fn_ocupar_cama(NEW.id_cama);
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
