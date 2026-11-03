@@ -45,3 +45,20 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
+--04 La interconsulta debe ir a un especialista de la especialidad solicitada.
+CREATE OR REPLACE FUNCTION fn_validar_interconsulta()
+RETURNS trigger AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM empleado
+        WHERE id_empleado = NEW.id_medico_especialista
+          AND id_especialidad = NEW.id_especialidad_solicitada
+    ) THEN
+        RAISE EXCEPTION 'El médico % no pertenece a la especialidad solicitada (%)',
+            NEW.id_medico_especialista, NEW.id_especialidad_solicitada;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
