@@ -113,3 +113,11 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Los movimientos son inmutables: para corregir, se registra un ajuste.
+CREATE OR REPLACE FUNCTION fn_bloquear_modificacion()
+RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'Los detalles de movimiento no se modifican ni eliminan; registre un ajuste';
+END;
+$$ LANGUAGE plpgsql;
