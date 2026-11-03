@@ -62,3 +62,15 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+--Funciones segunda parte:--
+
+-- Estado de las camas sincronizado con los ingresos hospitalarios.
+CREATE OR REPLACE FUNCTION fn_ocupar_cama(p_id_cama BIGINT)
+RETURNS VOID AS $$
+BEGIN
+    IF (SELECT estado FROM cama WHERE id_cama = p_id_cama) IS DISTINCT FROM 'DISPONIBLE' THEN
+        RAISE EXCEPTION 'La cama % no está disponible', p_id_cama;
+    END IF;
+    UPDATE cama SET estado = 'OCUPADA' WHERE id_cama = p_id_cama;
+END;
+$$ LANGUAGE plpgsql;
