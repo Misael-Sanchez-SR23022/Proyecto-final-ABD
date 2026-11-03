@@ -95,3 +95,21 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- El stock se actualiza solo desde los detalles de movimiento.
+CREATE OR REPLACE FUNCTION fn_actualizar_stock()
+RETURNS trigger AS $$
+DECLARE
+    v_tipo VARCHAR(20);
+BEGIN
+    SELECT tipo_movimiento INTO v_tipo
+    FROM movimiento_inventario WHERE id_movimiento = NEW.id_movimiento;
+
+    IF v_tipo IN ('ENTRADA', 'AJUSTE_POSITIVO') THEN
+        UPDATE insumo SET stock = stock + NEW.cantidad WHERE id_insumo = NEW.id_insumo;
+    ELSE
+        UPDATE insumo SET stock = stock - NEW.cantidad WHERE id_insumo = NEW.id_insumo;  -- ck_insumo_stock evita negativos
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
