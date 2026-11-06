@@ -1,5 +1,5 @@
 -- =====================================================================
--- CASO 1 — R1: OCUPACIÓN POR DEPARTAMENTO
+-- CASO 1 - OCUPACIÓN POR DEPARTAMENTO
 -- =====================================================================
 
 -- 1.1 Ejecución SIN uso de índices (Fuerza un recorrido secuencial / Seq Scan)
@@ -22,7 +22,7 @@ ORDER BY porcentaje_ocupacion DESC;
 
 
 -- =====================================================================
--- CASO 2 — R2: AGENDA QUIRÚRGICA DEL DÍA
+-- CASO 2 - AGENDA QUIRÚRGICA DEL DÍA
 -- =====================================================================
 
 -- 2.1 Ejecución SIN uso de índices (Evaluando costo sin optimización de índices)
@@ -47,7 +47,7 @@ WHERE fecha_hora_programada::date = CURRENT_DATE
 
 
 -- =====================================================================
--- CASO 3 — R3: INSUMOS BAJO MÍNIMO
+-- CASO 3 - INSUMOS BAJO MÍNIMO
 -- =====================================================================
 
 -- 3.1 Ejecución SIN uso de índices (Recorrido completo de la tabla de insumos)
@@ -70,7 +70,7 @@ ORDER BY unidades_faltantes DESC;
 
 
 -- =====================================================================
--- CASO 4 — R5: INTERCONSULTAS PENDIENTES
+-- CASO 4 - INTERCONSULTAS PENDIENTES
 -- =====================================================================
 
 -- 4.1 Ejecución SIN uso de índices (Analizando la consulta de interconsultas sin índices)
