@@ -10,9 +10,8 @@ ORDER BY porcentaje_ocupacion DESC;
 -- 2. Agenda quirúrgica del día
 SELECT * FROM vista_agenda_quirurgica
 WHERE fecha_hora_programada::date = CURRENT_DATE
-  AND estado_cirurgia IN ('PROGRAMADA', 'EN_CURSO')
+  AND vista_agenda_quirurgica.estado_cirugia IN ('PROGRAMADA', 'EN_CURSO')
 ORDER BY fecha_hora_programada, nombre_quirofano;
-
 
 -- 3. Insumos bajo mínimo
 SELECT * FROM vista_insumos_reposicion
@@ -36,12 +35,12 @@ ORDER BY
 
 
 -- 6. Estudios por estado y categoría
-SELECT * FROM vista_r6_estudios_por_estado
+SELECT * FROM vista_estudios_por_estado
 ORDER BY categoria, estado;
 
 
 -- 7. Top 10 diagnósticos (últimos 90 días)
-SELECT * FROM vista_r7_top_diagnosticos
+SELECT * FROM vista_top_diagnosticos
 ORDER BY frecuencia DESC
 LIMIT 10;
 

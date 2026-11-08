@@ -33,7 +33,7 @@ SET enable_indexonlyscan = off;
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 SELECT * FROM vista_agenda_quirurgica
 WHERE fecha_hora_programada::date = CURRENT_DATE
-  AND estado_cirurgia IN ('PROGRAMADA', 'EN_CURSO');
+  AND vista_agenda_quirurgica.estado_cirugia IN ('PROGRAMADA', 'EN_CURSO');
 
 -- 2.2 Ejecución CON uso de índices (Aprovechando los índices en fechas y estados)
 RESET enable_indexscan;
@@ -43,7 +43,7 @@ RESET enable_indexonlyscan;
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 SELECT * FROM vista_agenda_quirurgica
 WHERE fecha_hora_programada::date = CURRENT_DATE
-  AND estado_cirurgia IN ('PROGRAMADA', 'EN_CURSO');
+  AND vista_agenda_quirurgica.estado_cirugia IN ('PROGRAMADA', 'EN_CURSO');
 
 
 -- =====================================================================
