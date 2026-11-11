@@ -1,10 +1,6 @@
--- =============================================================================
--- 04_vistas.sql (Actualizado)
--- =============================================================================
-
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 0. LIMPIEZA DE VISTAS OBSOLETAS O CAMBIADAS DE NOMBRE
--- -----------------------------------------------------------------------------
+--  ============================================================================
 DROP VIEW IF EXISTS vista_ocupacion_camas CASCADE;
 DROP VIEW IF EXISTS vista_insumos_stock_bajo CASCADE;
 
@@ -20,9 +16,9 @@ DROP VIEW IF EXISTS vista_mantenimientos_pendientes CASCADE;
 DROP VIEW IF EXISTS vista_resumen_expediente_paciente CASCADE;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 1. OCUPACIÓN CONSOLIDADA POR DEPARTAMENTO
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_ocupacion_departamento AS
 SELECT
     d.nombre_departamento,
@@ -40,9 +36,9 @@ JOIN departamento d ON d.id_departamento = c.id_departamento
 GROUP BY d.nombre_departamento;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 2. AGENDA QUIRÚRGICA
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_agenda_quirurgica AS
 SELECT ci.id_cirugia,
        ci.fecha_hora_programada,
@@ -61,9 +57,9 @@ JOIN persona pc ON pc.id_persona = ci.id_cirujano_principal
 JOIN persona pa ON pa.id_persona = ci.id_anestesiologo;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 3. INSUMOS BAJO MÍNIMO CON COSTO DE REPOSICIÓN
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_insumos_reposicion AS
 SELECT
     i.id_insumo,
@@ -79,9 +75,9 @@ JOIN tipo_insumo ti ON ti.id_tipo_insumo = i.id_tipo_insumo
 WHERE i.stock <= i.stock_minimo;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 4. TURNOS DEL PERSONAL (guardias)
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_turnos_personal AS
 SELECT t.id_turno,
        p.primer_nombre || ' ' || p.primer_apellido AS nombre_empleado,
@@ -99,9 +95,9 @@ JOIN tipo_turno tt ON tt.id_tipo_turno = t.id_tipo_turno
 JOIN departamento d ON d.id_departamento = t.id_departamento;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 5. INTERCONSULTAS PENDIENTES CON TIEMPO DE ESPERA
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_interconsultas_pendientes AS
 SELECT
     i.id_interconsulta,
@@ -119,9 +115,9 @@ JOIN especialidad esp ON esp.id_especialidad = i.id_especialidad_solicitada
 WHERE i.estado IN ('SOLICITADA', 'EN_PROCESO');
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 6. ESTUDIOS DIAGNÓSTICOS POR ESTADO Y CATEGORÍA
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_estudios_por_estado AS
 SELECT
     te.categoria,
@@ -132,9 +128,9 @@ JOIN tipo_estudio te ON te.id_tipo_estudio = ed.id_tipo_estudio
 GROUP BY te.categoria, ed.estado;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 7. TOP DIAGNÓSTICOS (últimos 90 días)
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_top_diagnosticos AS
 SELECT
     c.diagnostico,
@@ -146,9 +142,9 @@ WHERE c.fecha_hora_consulta >= now() - INTERVAL '90 days'
 GROUP BY c.diagnostico;
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 8. MANTENIMIENTOS PENDIENTES CON TIEMPO RESTANTE
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_mantenimientos_pendientes AS
 SELECT
     e.nombre_equipo,
@@ -164,9 +160,9 @@ JOIN tipo_mantenimiento tm ON tm.id_tipo_mantenimiento = m.id_tipo_mantenimiento
 WHERE m.estado IN ('PROGRAMADO', 'EN_PROCESO');
 
 
--- -----------------------------------------------------------------------------
+--  ============================================================================
 -- 9. HISTORIAL DE CONSULTAS POR PACIENTE
--- -----------------------------------------------------------------------------
+--  ============================================================================
 CREATE OR REPLACE VIEW vista_resumen_expediente_paciente AS
 SELECT p.id_persona AS id_paciente,
        p.primer_nombre || ' ' || p.primer_apellido AS nombre_paciente,

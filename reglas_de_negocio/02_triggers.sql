@@ -1,7 +1,3 @@
--- =====================================================================
--- PERSONA 3: TRIGGERS
--- =====================================================================
-
 -- 1. trg_consulta_medico
 CREATE TRIGGER trg_consulta_medico
 BEFORE INSERT OR UPDATE ON consulta

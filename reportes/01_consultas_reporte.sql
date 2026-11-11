@@ -1,7 +1,3 @@
--- =====================================================================
--- 05_consultas_reporte.sql
--- =====================================================================
-
 -- 1. Ocupación por departamento
 SELECT * FROM vista_ocupacion_departamento
 ORDER BY porcentaje_ocupacion DESC;
