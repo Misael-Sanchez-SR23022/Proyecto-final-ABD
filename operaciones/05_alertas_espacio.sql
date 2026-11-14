@@ -180,3 +180,26 @@ WHERE porcentaje_usado >= 80;
 -- SELECT * FROM monitoreo.v_wal_archivado;
 -- NOTA: las vistas detectan estados; para notificar por correo/Slack se requiere
 -- un job externo (cron/Task Scheduler/Prometheus/Alertmanager).
+
+
+-- Rol mínimo para el proceso de recolección/consulta de métricas.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='rol_monitoreo') THEN
+        CREATE ROLE rol_monitoreo NOLOGIN;
+    END IF;
+END $$;
+
+GRANT USAGE ON SCHEMA monitoreo TO rol_monitoreo;
+GRANT SELECT ON ALL TABLES IN SCHEMA monitoreo TO rol_monitoreo;
+GRANT INSERT ON monitoreo.medicion_bd, monitoreo.medicion_filesystem TO rol_monitoreo;
+GRANT USAGE, SELECT ON SEQUENCE
+    monitoreo.medicion_bd_id_seq,
+    monitoreo.medicion_filesystem_id_seq
+TO rol_monitoreo;
+GRANT EXECUTE ON PROCEDURE monitoreo.registrar_medicion_bd() TO rol_monitoreo;
+GRANT pg_monitor TO rol_monitoreo;
+
+-- Asignar el rol a una cuenta LOGIN creada por el administrador:
+-- GRANT rol_monitoreo TO usuario_monitoreo;
+-- No guardar la contraseña de esa cuenta en este repositorio.
