@@ -510,3 +510,14 @@ USING (
 -- Las políticas INSERT/UPDATE de consulta y estudio creadas arriba verifican
 -- que el paciente sea visible; por tanto requieren asignación activa previa
 -- (o relación asistencial histórica visible).
+
+
+-- La política consulta asignaciones sin exponer la relación completa a todos.
+-- El médico solo puede leer sus propias asignaciones; la escritura queda
+-- reservada al propietario/administrador de la base de datos.
+ALTER TABLE asignacion_paciente ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON asignacion_paciente TO rol_medico;
+DROP POLICY IF EXISTS pol_asignacion_medico ON asignacion_paciente;
+CREATE POLICY pol_asignacion_medico ON asignacion_paciente
+FOR SELECT TO rol_medico
+USING (id_empleado=public.fn_rls_empleado_id());
