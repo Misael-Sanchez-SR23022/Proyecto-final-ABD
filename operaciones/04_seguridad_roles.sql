@@ -234,3 +234,54 @@ USING (
 -- WHERE n.nspname='public' AND c.relname IN
 -- ('paciente','expediente','consulta','estudio_diagnostico','ingreso_hospitalario','interconsulta');
 -- SELECT * FROM pg_policies WHERE schemaname='public';
+
+
+-- Capa adicional de privacidad: persona contiene datos identificativos de
+-- pacientes y empleados. No permitir a los roles clínicos una lectura global.
+ALTER TABLE persona ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS pol_persona_medico ON persona;
+CREATE POLICY pol_persona_medico ON persona
+FOR SELECT TO rol_medico
+USING (
+    id_persona = public.fn_rls_empleado_id()
+    OR EXISTS (
+        SELECT 1 FROM public.paciente p
+        WHERE p.id_paciente = persona.id_persona
+    )
+);
+
+DROP POLICY IF EXISTS pol_persona_enfermeria ON persona;
+CREATE POLICY pol_persona_enfermeria ON persona
+FOR SELECT TO rol_enfermeria
+USING (
+    id_persona = public.fn_rls_empleado_id()
+    OR EXISTS (
+        SELECT 1 FROM public.paciente p
+        JOIN public.ingreso_hospitalario ih ON ih.id_paciente=p.id_paciente
+        JOIN public.cama ca ON ca.id_cama=ih.id_cama
+        WHERE p.id_paciente=persona.id_persona
+          AND ca.id_departamento=public.fn_rls_departamento_id()
+          AND ih.estado='ACTIVO'
+    )
+);
+
+-- Recepción registra identidades, pero no obtiene un SELECT indiscriminado.
+REVOKE SELECT ON persona, paciente, expediente FROM rol_recepcion;
+GRANT INSERT ON persona, paciente, expediente TO rol_recepcion;
+
+DROP POLICY IF EXISTS pol_persona_recepcion_insert ON persona;
+CREATE POLICY pol_persona_recepcion_insert ON persona
+FOR INSERT TO rol_recepcion WITH CHECK (true);
+
+DROP POLICY IF EXISTS pol_paciente_recepcion_insert ON paciente;
+CREATE POLICY pol_paciente_recepcion_insert ON paciente
+FOR INSERT TO rol_recepcion WITH CHECK (true);
+
+DROP POLICY IF EXISTS pol_expediente_recepcion_insert ON expediente;
+CREATE POLICY pol_expediente_recepcion_insert ON expediente
+FOR INSERT TO rol_recepcion WITH CHECK (true);
+
+-- RLS para datos identificativos: no se habilita acceso público ni lectura
+-- global para recepción. La aplicación debe capturar el ID generado de forma
+-- segura durante el alta (por ejemplo, con una función transaccional controlada).
