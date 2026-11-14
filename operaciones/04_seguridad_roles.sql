@@ -285,3 +285,83 @@ FOR INSERT TO rol_recepcion WITH CHECK (true);
 -- RLS para datos identificativos: no se habilita acceso público ni lectura
 -- global para recepción. La aplicación debe capturar el ID generado de forma
 -- segura durante el alta (por ejemplo, con una función transaccional controlada).
+
+
+-- Completar el acceso a interconsultas y estudios para roles autorizados.
+GRANT SELECT ON interconsulta TO rol_medico;
+
+DROP POLICY IF EXISTS pol_estudio_enfermeria ON estudio_diagnostico;
+CREATE POLICY pol_estudio_enfermeria ON estudio_diagnostico
+FOR SELECT TO rol_enfermeria
+USING (
+    EXISTS (
+        SELECT 1 FROM public.ingreso_hospitalario ih
+        JOIN public.cama ca ON ca.id_cama=ih.id_cama
+        WHERE ih.id_paciente=estudio_diagnostico.id_paciente
+          AND ca.id_departamento=public.fn_rls_departamento_id()
+          AND ih.estado='ACTIVO'
+    )
+);
+
+DROP POLICY IF EXISTS pol_interconsulta_enfermeria ON interconsulta;
+CREATE POLICY pol_interconsulta_enfermeria ON interconsulta
+FOR SELECT TO rol_enfermeria
+USING (
+    EXISTS (
+        SELECT 1 FROM public.ingreso_hospitalario ih
+        JOIN public.cama ca ON ca.id_cama=ih.id_cama
+        WHERE ih.id_paciente=interconsulta.id_paciente
+          AND ca.id_departamento=public.fn_rls_departamento_id()
+          AND ih.estado='ACTIVO'
+    )
+);
+
+-- Evitar que un médico inserte/actualice una consulta o estudio para un
+-- paciente que no está dentro de su conjunto de pacientes visible por RLS.
+DROP POLICY IF EXISTS pol_consulta_medico_insert ON consulta;
+CREATE POLICY pol_consulta_medico_insert ON consulta
+FOR INSERT TO rol_medico
+WITH CHECK (
+    id_empleado = public.fn_rls_empleado_id()
+    AND id_departamento = public.fn_rls_departamento_id()
+    AND EXISTS (
+        SELECT 1 FROM public.paciente p
+        WHERE p.id_paciente = consulta.id_paciente
+    )
+);
+
+DROP POLICY IF EXISTS pol_consulta_medico_update ON consulta;
+CREATE POLICY pol_consulta_medico_update ON consulta
+FOR UPDATE TO rol_medico
+USING (id_empleado = public.fn_rls_empleado_id())
+WITH CHECK (
+    id_empleado = public.fn_rls_empleado_id()
+    AND id_departamento = public.fn_rls_departamento_id()
+    AND EXISTS (
+        SELECT 1 FROM public.paciente p
+        WHERE p.id_paciente = consulta.id_paciente
+    )
+);
+
+DROP POLICY IF EXISTS pol_estudio_medico_insert ON estudio_diagnostico;
+CREATE POLICY pol_estudio_medico_insert ON estudio_diagnostico
+FOR INSERT TO rol_medico
+WITH CHECK (
+    id_medico_solicitante = public.fn_rls_empleado_id()
+    AND EXISTS (
+        SELECT 1 FROM public.paciente p
+        WHERE p.id_paciente = estudio_diagnostico.id_paciente
+    )
+);
+
+DROP POLICY IF EXISTS pol_estudio_medico_update ON estudio_diagnostico;
+CREATE POLICY pol_estudio_medico_update ON estudio_diagnostico
+FOR UPDATE TO rol_medico
+USING (id_medico_solicitante = public.fn_rls_empleado_id())
+WITH CHECK (
+    id_medico_solicitante = public.fn_rls_empleado_id()
+    AND EXISTS (
+        SELECT 1 FROM public.paciente p
+        WHERE p.id_paciente = estudio_diagnostico.id_paciente
+    )
+);
