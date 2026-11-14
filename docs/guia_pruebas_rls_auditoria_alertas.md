@@ -51,7 +51,13 @@ SET usuario_bd = 'usr_medico_cardio'
 WHERE id_empleado = 13;
 ~~~
 
-Cada login debe estar asociado a un único empleado. Si la consulta devuelve NULL para el empleado, las políticas de ese usuario no concederán acceso a filas clínicas.
+~~~sql
+-- Ejemplo administrativo: sustituir IDs y motivo por la asignación autorizada.
+INSERT INTO asignacion_paciente (id_paciente,id_empleado,motivo)
+VALUES (1,13,'Médico responsable');
+~~~
+
+Cada login debe estar asociado a un único empleado. Si la consulta devuelve NULL para el empleado, las políticas de ese usuario no concederán acceso a filas clínicas. Además, el administrador debe registrar las asignaciones activas de pacientes a médicos:
 
 ## 3. Pruebas de aislamiento RLS
 
@@ -73,7 +79,7 @@ FROM interconsulta ORDER BY id_interconsulta;
 ~~~
 
 Criterios:
-- El médico solo ve consultas y estudios que solicitó, expedientes/pacientes con relación clínica y los ingresos que formalizó.
+- El médico ve pacientes con asignación asistencial activa, además de las relaciones clínicas propias; consulta y estudio requieren que el paciente sea visible por RLS.
 - Enfermería solo ve ingresos activos de camas de su departamento y las filas clínicas derivadas de ese ámbito.
 - Recepción puede insertar persona, paciente y expediente; no tiene SELECT global sobre esos datos ni acceso a consultas/estudios.
 - Un login sin asociación en empleado.usuario_bd no debe ver filas clínicas por estas políticas.
@@ -93,7 +99,7 @@ WHERE relname IN ('persona','paciente','expediente','consulta',
                   'estudio_diagnostico','ingreso_hospitalario','interconsulta');
 ~~~
 
-**Nota de diseño:** el esquema actual no modela asignaciones formales de enfermería a pacientes ni un registro de acceso/atención por episodio. Por eso, el alcance de enfermería se aproxima mediante departamento de cama e ingreso activo. Para producción, conviene incorporar una tabla de asignación asistencial por paciente/episodio y basar RLS en esa relación explícita.
+**Nota de diseño:** el script 04 crea la tabla asignacion_paciente para vincular un paciente con el médico responsable. El alta de esa relación debe realizarla un administrador/gestor autorizado. El esquema aún no modela asignaciones formales de enfermería a pacientes ni un registro de acceso por episodio; por eso, el alcance de enfermería se aproxima mediante departamento de cama e ingreso activo. Para producción, se recomienda una asignación asistencial explícita también para enfermería.
 
 ## 4. Prueba de auditoría
 
@@ -144,7 +150,7 @@ export PGDATA=/var/lib/pgsql/data
 bash respaldos/medir_espacio.sh
 ~~~
 
-Programar el script con cron o el programador de tareas del sistema operativo. Proteger las credenciales con .pgpass o un gestor de secretos. Dar al usuario recolector solo permisos INSERT sobre monitoreo.medicion_filesystem.
+Programar el script con cron o el programador de tareas del sistema operativo. Proteger las credenciales con .pgpass o un gestor de secretos. Asignar rol_monitoreo a la cuenta recolectora (GRANT rol_monitoreo TO usuario_monitoreo); el script 05 define sus permisos de lectura de métricas e inserción de mediciones.
 
 ### Notificaciones
 
