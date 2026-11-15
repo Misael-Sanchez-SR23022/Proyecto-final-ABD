@@ -14,7 +14,7 @@ Con el objetivo de proteger la confidencialidad e integridad de los datos clíni
 
 **Validación de restricción de borrado (`DELETE`):** Al autenticar la sesión como `usr_medico_cardio` e intentar ejecutar `DELETE FROM paciente WHERE id_paciente = 1;`, PostgreSQL rechaza la operación con el código `SQL state: 42501 (ERROR: permission denied for table paciente)`, garantizando que ningún profesional clínico pueda eliminar registros maestros de pacientes.
 
-![Evidencia bloqueo DELETE en paciente](13_bloqueo_delete_paciente.png)
+![Evidencia bloqueo DELETE en paciente](/docs/comprobaciones/seguridad_auditoria/01_bloqueo_delete_paciente.png)
 
 ### 1.2 Aislamiento de Expedientes mediante Row Level Security (RLS) (Ref. S13-S1)
 Para evitar que un médico consulte expedientes clínicos de pacientes que no pertenecen a su departamento de atención, se activó **Row Level Security** (`ALTER TABLE expediente ENABLE ROW LEVEL SECURITY`) junto con la política `pol_expediente_departamento_medico`:
@@ -22,7 +22,7 @@ Para evitar que un médico consulte expedientes clínicos de pacientes que no pe
 * La política evalúa dinámicamente `current_user` contra `empleado.usuario_bd` y verifica que el paciente tenga al menos una consulta (`consulta.id_departamento`) o un ingreso hospitalario (`cama.id_departamento`) asociado al departamento del médico conectado.
 * **Prueba de aislamiento:** Al ejecutar `SELECT * FROM expediente;` bajo el usuario `usr_medico_cardio` (Departamento de Cardiología, `id_departamento = 5`), el motor filtra automáticamente los resultados y devuelve únicamente el expediente del paciente atendido en Cardiología (`id_paciente = 7`), ocultando los expedientes de Pediatría (`id_departamento = 4`) y otras áreas.
 
-![Evidencia aislamiento RLS en expediente](14_rls_expediente_cardio.png)
+![Evidencia aislamiento RLS en expediente](/docs/comprobaciones/seguridad_auditoria/02_rls_expediente_cardio.png)
 
 ### 1.3 Auditoría y Detección de Intrusiones (Ref. S13-S2)
 La trazabilidad de operaciones sensibles se estructuró en dos niveles dentro de `operaciones/03_auditoria.sql`:
@@ -30,7 +30,7 @@ La trazabilidad de operaciones sensibles se estructuró en dos niveles dentro de
 1. **Configuración a nivel de servidor con `pgAudit`:** Se documentó la activación de la extensión oficial `pgaudit` mediante `shared_preload_libraries = 'pgaudit'` en `postgresql.conf` y la directiva `ALTER SYSTEM SET pgaudit.log = 'ddl, role, write';` para registrar cambios estructurales (`DDL`), gestión de permisos (`ROLE`) y escrituras (`WRITE`) en los logs del servidor.
 2. **Bitácora transaccional mediante Triggers (`auditoria_log`):** Se creó la tabla `auditoria_log` y la función `fn_auditoria_general()` (`SECURITY DEFINER`) asociada a triggers `AFTER INSERT OR UPDATE OR DELETE` en las tablas críticas `paciente`, `expediente` y `consulta`. Cada cambio almacena el usuario (`current_user`), marca de tiempo (`now()`), tabla afectada, tipo de operación y una instantánea en formato `JSONB` con los valores previos (`antes`) y posteriores (`despues`).
 
-![Evidencia bitácora auditoria_log](15_auditoria_log.png)
+![Evidencia bitácora auditoria_log](/docs/comprobaciones/seguridad_auditoria/03_auditoria_log.png)
 
 ### 1.4 Métricas Vigiladas y Alertas Configuradas (`02_monitoreo.sql` y `05_alertas_espacio.sql`)
 Para garantizar la disponibilidad operativa del hospital 24/7, se monitorean cuatro dimensiones críticas con sus respectivos umbrales de alerta:
@@ -42,7 +42,7 @@ Para garantizar la disponibilidad operativa del hospital 24/7, se monitorean cua
 | **Queries lentas** | `pg_stat_statements` / `pg_stat_activity` | Consultas activas `> 5 segundos` (`query > 5 s`) | Revisión de planes de ejecución (`EXPLAIN ANALYZE`) e índices |
 | **Bloqueos (Locks)** | `pg_locks` + `pg_blocking_pids()` | Bloqueos activos esperando `> 3 segundos` | Identificación de transacción bloqueante y resolución de contención |
 
-![Evidencia alertas de espacio y particiones](16_alertas_espacio.png)
+![Evidencia alertas de espacio y particiones](/docs/comprobaciones/seguridad_auditoria/04_alertas_espacio.png)
 
 ---
 
