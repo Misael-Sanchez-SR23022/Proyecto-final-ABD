@@ -1,4 +1,9 @@
---01 Un "médico" es un empleado ACTIVO con especialidad y número de licencia.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+
+-- ============================================================
+-- 01. VALIDACIÓN DE MÉDICOS
+-- ============================================================
 CREATE OR REPLACE FUNCTION es_medico(p_id_empleado BIGINT)
 RETURNS BOOLEAN AS $$
     SELECT EXISTS (
@@ -11,7 +16,9 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE;
 
 
---02 Trigger genérico: recibe como argumentos los nombres de las columnas a validar
+-- ============================================================
+-- 02. VALIDACIÓN GENÉRICA DE MÉDICOS EN TRIGGERS
+-- ============================================================
 CREATE OR REPLACE FUNCTION fn_validar_medico()
 RETURNS trigger AS $$
 DECLARE
@@ -29,7 +36,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 
---03 El anestesiólogo debe tener la especialidad de anestesiología
+-- ============================================================
+-- 03. VALIDACIÓN DE ANESTESIÓLOGOS
+-- ============================================================
 CREATE OR REPLACE FUNCTION fn_validar_anestesiologo()
 RETURNS trigger AS $$
 BEGIN
@@ -46,8 +55,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
---04 La interconsulta debe ir a un especialista de la especialidad solicitada.
+-- ============================================================
+-- 04. VALIDACIÓN DE INTERCONSULTAS
+-- ============================================================
 CREATE OR REPLACE FUNCTION fn_validar_interconsulta()
 RETURNS trigger AS $$
 BEGIN
@@ -62,9 +72,13 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
---Funciones segunda parte:--
 
--- Estado de las camas sincronizado con los ingresos hospitalarios.
+
+-- ============================================================
+-- 05. GESTIÓN AUTOMÁTICA DEL ESTADO DE LAS CAMAS
+-- ============================================================
+
+-- Marca una cama como ocupada, siempre que esté disponible.
 CREATE OR REPLACE FUNCTION fn_ocupar_cama(p_id_cama BIGINT)
 RETURNS VOID AS $$
 BEGIN
@@ -75,6 +89,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Sincroniza el estado de las camas con los ingresos hospitalarios.
+-- Gestiona ocupaciones, altas, cancelaciones y traslados.
 CREATE OR REPLACE FUNCTION fn_ingreso_gestiona_cama()
 RETURNS trigger AS $$
 BEGIN
@@ -96,7 +112,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- El stock se actualiza solo desde los detalles de movimiento.
+-- ============================================================
+-- 06. ACTUALIZACIÓN AUTOMÁTICA DEL INVENTARIO
+-- ============================================================
+
 CREATE OR REPLACE FUNCTION fn_actualizar_stock()
 RETURNS trigger AS $$
 DECLARE
@@ -114,10 +133,48 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Los movimientos son inmutables: para corregir, se registra un ajuste.
+-- ============================================================
+-- 07. PROTECCIÓN DE LOS MOVIMIENTOS DE INVENTARIO
+-- ============================================================
 CREATE OR REPLACE FUNCTION fn_bloquear_modificacion()
 RETURNS trigger AS $$
 BEGIN
     RAISE EXCEPTION 'Los detalles de movimiento no se modifican ni eliminan; registre un ajuste';
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- 08. ENCRIPTACIÓN Y DESENCRIPTACIÓN DEL DUI
+-- ============================================================
+
+-- Encripta el DUI utilizando el algoritmo AES-256.
+CREATE OR REPLACE FUNCTION fn_encriptar_dui(p_dui TEXT, p_clave TEXT)
+RETURNS BYTEA AS $$
+BEGIN
+    RETURN pgp_sym_encrypt(p_dui, p_clave, 'cipher-algo=aes256');
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION fn_desencriptar_dui(p_dui_encriptado BYTEA, p_clave TEXT)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN pgp_sym_decrypt(p_dui_encriptado, p_clave);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- ============================================================
+-- 09. PRUEBAS DE ENCRIPTACIÓN Y DESENCRIPTACIÓN
+-- ============================================================
+
+-- Prueba de encriptación de un DUI.
+/*
+SELECT fn_encriptar_dui('01010101-1', 'MiClaveSecretaSuperSegura2026!') 
+AS dui_encriptado;
+
+
+-- Prueba de desencriptación del DUI.
+SELECT fn_desencriptar_dui(fn_encriptar_dui('01010101-1', 'MiClaveSecretaSuperSegura2026!'),'MiClaveSecretaSuperSegura2026!') 
+AS dui_original;
+*/
