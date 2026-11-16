@@ -109,6 +109,7 @@ CREATE INDEX ix_insumo_stock_bajo
 -- ========================
 -- ACTUALIZAR ESTADÍSTICAS
 -- ========================
+/*
 ANALYZE persona;
 ANALYZE cama;
 ANALYZE ingreso_hospitalario;
@@ -119,3 +120,4 @@ ANALYZE interconsulta;
 ANALYZE mantenimiento_equipo;
 ANALYZE estudio_diagnostico;
 ANALYZE insumo;
+*/
