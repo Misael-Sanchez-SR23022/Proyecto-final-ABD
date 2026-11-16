@@ -182,12 +182,12 @@ Después se vuelve a ejecutar `06-operaciones-2/14_autovacuum_particiones.sql`, 
 `05-scripts-iniciales-2/13_tablespaces.sql` crea cuatro tablespaces y mueve objetos a ellos:
 
 
-| Tablespace      | Contenido                                                                                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ts_datos`      | `consulta` y `estudio_diagnostico` (destino de sus particiones nuevas), `detalle_resultado_estudio`, `movimiento_inventario`, `detalle_movimiento_inventario`. |
-| `ts_indices`    | `ix_consulta_paciente`, `ix_estudio_paciente`, `ix_estudio_medico`, `ix_estudio_tipo_estado`, `ix_estudio_pendientes`, `ix_ingreso_fecha_estado`.              |
-| `ts_historicos` | `auditoria_log` y las particiones de 4T-2026 de `consulta` y `estudio_diagnostico`.                                                                            |
-| `ts_bitacoras`  | Reservado; sin objetos asignados por ahora.                                                                                                                    |
+| Tablespace | Contenido |
+|---|---|
+| `ts_datos` | `consulta` y `estudio_diagnostico` (destino de sus particiones nuevas), `detalle_resultado_estudio`, `movimiento_inventario`, `detalle_movimiento_inventario`. |
+| `ts_indices` | `ix_consulta_paciente`, `ix_estudio_paciente`, `ix_estudio_medico`, `ix_estudio_tipo_estado`, `ix_estudio_pendientes`, `ix_ingreso_fecha_estado`. |
+| `ts_bitacoras` | `auditoria_log` y las tablas de medición `monitoreo.medicion_bd` y `monitoreo.medicion_filesystem`. |
+| `ts_historicos` | Las particiones de 4T-2026 de `consulta` y `estudio_diagnostico`. |
 
 
 Antes de ejecutarlo hay que crear las carpetas con propietario `postgres` y permisos `700` (los comandos están comentados en el script; hay variante Linux, `/var/lib/pgsql/tablespaces/`, y Windows, `C:/PostgreSQL/Tablespaces/`) y ejecutarlo **después** de índices y auditoría, porque mueve objetos creados en esos scripts. `CREATE TABLESPACE` no puede ejecutarse dentro de una transacción: si pgAdmin lo rechaza, ejecute cada sentencia por separado o use `psql -f`. Mover una tabla particionada solo cambia el destino de sus particiones futuras; las existentes se mueven una a una.

@@ -55,8 +55,12 @@ BEGIN
     ALTER TABLE IF EXISTS movimiento_inventario SET TABLESPACE ts_datos;
     ALTER TABLE IF EXISTS detalle_movimiento_inventario SET TABLESPACE ts_datos;
 
+    -- Bitácoras (auditoría y mediciones de monitoreo)
+    ALTER TABLE IF EXISTS auditoria_log SET TABLESPACE ts_bitacoras;
+    ALTER TABLE IF EXISTS monitoreo.medicion_bd SET TABLESPACE ts_bitacoras;
+    ALTER TABLE IF EXISTS monitoreo.medicion_filesystem SET TABLESPACE ts_bitacoras;
+
     -- Mover tablas Históricas
-    ALTER TABLE IF EXISTS auditoria_log SET TABLESPACE ts_historicos;
     ALTER TABLE IF EXISTS consulta_2026_q4 SET TABLESPACE ts_historicos;
     ALTER TABLE IF EXISTS estudio_diagnostico_2026_q4 SET TABLESPACE ts_historicos;
 
@@ -67,7 +71,7 @@ BEGIN
     ALTER INDEX IF EXISTS ix_estudio_tipo_estado SET TABLESPACE ts_indices;
     ALTER INDEX IF EXISTS ix_estudio_pendientes SET TABLESPACE ts_indices;
     ALTER INDEX IF EXISTS ix_ingreso_fecha_estado SET TABLESPACE ts_indices;
-    
+
     RAISE NOTICE 'Tablas e índices movidos a los tablespaces correctamente.';
 END $$;
 
